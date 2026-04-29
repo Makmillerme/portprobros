@@ -42,6 +42,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y wireguard-tools iptables-persi
 
 # ─── 2. Generate server keypair ───────────────────────────────────────────────
 echo "[*] Generating WireGuard keypair..."
+install -d -m 0700 "$WG_DIR"
 wg genkey | tee "${WG_DIR}/vps_private.key" | wg pubkey > "${WG_DIR}/vps_public.key"
 chmod 600 "${WG_DIR}/vps_private.key"
 VPS_PRIVATE=$(cat "${WG_DIR}/vps_private.key")
@@ -97,14 +98,11 @@ sysctl -p /etc/sysctl.d/99-wg.conf
 
 # ─── 5. UFW rules ─────────────────────────────────────────────────────────────
 echo "[*] Updating UFW rules..."
-ufw allow ${WG_PORT}/udp comment 'WireGuard'
-
-# Close frps dashboard port (7500) - no longer needed for Rust tunneling
-# Keep 7000 only if you plan to use frps for other services; otherwise close it too.
-# Uncomment lines below to close:
-# ufw delete allow 7500/tcp
-# ufw delete allow 7000/tcp
-
+ufw allow ${WG_PORT}/udp         comment 'WireGuard'
+ufw allow ${RUST_GAME_UDP}/udp   comment 'Rust Game'
+ufw allow ${RUST_QUERY_UDP}/udp  comment 'Rust Query'
+ufw allow ${RUST_RCON_TCP}/tcp   comment 'Rust RCON'
+ufw allow ${RUST_PLUS_TCP}/tcp   comment 'Rust+'
 ufw reload
 
 # ─── 6. Enable and start WireGuard ───────────────────────────────────────────

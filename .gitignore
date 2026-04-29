@@ -6,3 +6,6 @@ client/wg0.conf
 client/*.key
 client/scripts/*.key
 client/tools/downloads/
+
+# Serena AI dev-workflow memories (personal, not project docs)
+.serena/memories/

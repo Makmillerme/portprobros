@@ -5,7 +5,7 @@
   Uses winget if available; otherwise downloads the latest amd64 MSI from GitHub releases.
 
 .NOTES
-  Windows still installs the Wintun driver — this cannot be avoided for a real WG tunnel.
+  Windows still installs the Wintun driver - this cannot be avoided for a real WG tunnel.
   Run: PowerShell (Admin) -> cd repo -> .\client\scripts\Install-WireGuard.ps1
 #>
 
@@ -40,10 +40,10 @@ if ($winget) {
             }
             Start-Sleep -Seconds 1
         }
-        Write-Warning 'winget finished but wg.exe not found yet — trying MSI fallback...'
+        Write-Warning 'winget finished but wg.exe not found yet - trying MSI fallback...'
     }
     catch {
-        Write-Warning "winget failed: $_ — trying MSI fallback..."
+        Write-Warning "winget failed: $_ - trying MSI fallback..."
     }
 }
 
@@ -60,7 +60,7 @@ New-Item -ItemType Directory -Force -Path $toolsDir | Out-Null
 $msiPath = Join-Path $toolsDir $msi.name
 Invoke-WebRequest -Uri $msi.browser_download_url -OutFile $msiPath -UseBasicParsing
 
-Write-Host '[*] Running silent MSI install (needs Admin — you already elevated)...'
+Write-Host '[*] Running silent MSI install (needs Admin - you already elevated)...'
 $p = Start-Process -FilePath 'msiexec.exe' -ArgumentList @('/i', "`"$msiPath`"", '/qn', '/norestart') -Wait -PassThru
 if ($p.ExitCode -ne 0) {
     throw "msiexec exited with $($p.ExitCode)"

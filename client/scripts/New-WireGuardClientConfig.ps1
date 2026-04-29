@@ -49,7 +49,9 @@ $lines = @(
     'Endpoint = makmillerrust.duckdns.org:51820'
     'PersistentKeepalive = 25'
 )
-$lines | Set-Content -Path $confPath -Encoding utf8
+# WireGuard Windows rejects UTF-8 with BOM; Set-Content -Encoding utf8 adds BOM on PS 5.1
+$utf8NoBom = New-Object System.Text.UTF8Encoding $false
+[System.IO.File]::WriteAllLines($confPath, $lines, $utf8NoBom)
 
 Write-Host ''
 Write-Host '============================================================'

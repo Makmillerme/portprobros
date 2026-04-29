@@ -8,7 +8,8 @@
 #   2. Generates VPS WG keypair
 #   3. Creates /etc/wireguard/wg0.conf with PostUp/PostDown iptables rules
 #   4. Enables ip_forward (kernel + sysctl)
-#   5. Opens UFW UDP 51820 and closes unused frps ports 7000/7500
+#   5. Opens INPUT (iptables): WG + Rust ports — saves via netfilter-persistent if present
+#      (On Ubuntu Noble, apt may remove ufw when installing iptables-persistent.)
 #   6. Enables and starts wg-quick@wg0
 #
 # After running this script:
@@ -96,14 +97,27 @@ echo "[*] Enabling ip_forward..."
 echo "net.ipv4.ip_forward = 1" > /etc/sysctl.d/99-wg.conf
 sysctl -p /etc/sysctl.d/99-wg.conf
 
-# ─── 5. UFW rules ─────────────────────────────────────────────────────────────
-echo "[*] Updating UFW rules..."
-ufw allow ${WG_PORT}/udp         comment 'WireGuard'
-ufw allow ${RUST_GAME_UDP}/udp   comment 'Rust Game'
-ufw allow ${RUST_QUERY_UDP}/udp  comment 'Rust Query'
-ufw allow ${RUST_RCON_TCP}/tcp   comment 'Rust RCON'
-ufw allow ${RUST_PLUS_TCP}/tcp   comment 'Rust+'
-ufw reload
+# ─── 5. Host firewall: INPUT (iptables, not ufw) ────────────────────────────
+# Ubuntu Noble: installing iptables-persistent removes ufw — use iptables directly.
+echo "[*] iptables INPUT: WireGuard + Rust ports..."
+iptables_allow_input() {
+  local args=("$@")
+  iptables -C INPUT "${args[@]}" 2>/dev/null || iptables -I INPUT 1 "${args[@]}"
+}
+iptables_allow_input -p udp --dport "${WG_PORT}"        -j ACCEPT
+iptables_allow_input -p udp --dport "${RUST_GAME_UDP}"  -j ACCEPT
+iptables_allow_input -p udp --dport "${RUST_QUERY_UDP}" -j ACCEPT
+iptables_allow_input -p tcp --dport "${RUST_RCON_TCP}"  -j ACCEPT
+iptables_allow_input -p tcp --dport "${RUST_PLUS_TCP}"  -j ACCEPT
+if command -v netfilter-persistent >/dev/null 2>&1; then
+  netfilter-persistent save
+  echo "[OK] Правила збережено (netfilter-persistent)."
+elif command -v iptables-save >/dev/null 2>&1 && [[ -d /etc/iptables ]]; then
+  iptables-save > /etc/iptables/rules.v4
+  echo "[OK] Збережено /etc/iptables/rules.v4"
+else
+  echo "[i] netfilter-persistent не знайдено — INPUT правила активні до перезавантаження; встановіть iptables-persistent."
+fi
 
 # ─── 6. Enable and start WireGuard ───────────────────────────────────────────
 echo "[*] Starting wg-quick@${WG_IFACE}..."

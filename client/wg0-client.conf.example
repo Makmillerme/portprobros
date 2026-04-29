@@ -1,0 +1,11 @@
+# ПК (Windows): доповни ключі або запусти client\scripts\Setup-WireGuardTunnel.ps1 від адміна.
+
+[Interface]
+Address    = 10.8.0.2/24
+PrivateKey = <HOME_PC_PRIVATE_KEY>
+
+[Peer]
+PublicKey           = <VPS_PUBLIC_KEY>
+AllowedIPs          = 10.8.0.0/24
+Endpoint            = makmillerrust.duckdns.org:51820
+PersistentKeepalive = 25

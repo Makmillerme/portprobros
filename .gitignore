@@ -1,0 +1,8 @@
+# Secrets
+server/.env
+
+# WireGuard secrets — never commit
+client/wg0.conf
+client/*.key
+client/scripts/*.key
+client/tools/downloads/
